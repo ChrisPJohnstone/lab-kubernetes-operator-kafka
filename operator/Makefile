@@ -1,6 +1,6 @@
 BINARY           ?= kafka-operator
 CONTAINER_ENGINE ?= podman
-IMAGE_NAME       ?= kafka-operator:dev
+IMAGE_NAME       ?= localhost/kafka-operator:dev
 
 .DEFAULT_GOAL := $(BINARY)
 .PHONY: all image clean lint

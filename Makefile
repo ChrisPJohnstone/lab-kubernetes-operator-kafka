@@ -1,10 +1,16 @@
 CONTAINER_ENGINE ?= podman
 
-.PHONY: deploy destroy
+.PHONY: kafka cluster destroy
 
-deploy:
+all: kafka cluster
+
+kafka:
 	$(CONTAINER_ENGINE) compose up -d
 
+cluster:
+	minikube start
+
 destroy:
+	minikube delete
 	$(CONTAINER_ENGINE) compose down -v
 	$(CONTAINER_ENGINE) unshare rm -rf output

@@ -1,16 +1,20 @@
 CONTAINER_ENGINE ?= podman
 
-.PHONY: kafka cluster destroy
+.PHONY: kafka operator cluster clean
 
-all: kafka cluster
+all: kafka operator cluster
 
 kafka:
 	$(CONTAINER_ENGINE) compose up -d
 
+operator:
+	make -C operator image
+
 cluster:
 	minikube start
 
-destroy:
+clean:
 	minikube delete
+	make -C operator clean
 	$(CONTAINER_ENGINE) compose down -v
 	$(CONTAINER_ENGINE) unshare rm -rf output

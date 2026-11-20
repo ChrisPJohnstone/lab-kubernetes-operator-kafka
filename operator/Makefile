@@ -1,13 +1,21 @@
 BINARY           ?= kafka-operator
 CONTAINER_ENGINE ?= podman
+IMAGE_NAME       ?= kafka-operator:dev
 
-.PHONY: clean lint
+.DEFAULT_GOAL := $(BINARY)
+.PHONY: all image clean lint
+
+all: $(BINARY) image
 
 $(BINARY): $(shell find . -type f -name '*.go')
 	go build -o $(BINARY) .
 
+image: $(shell find . -type f -name '*.go') Containerfile
+	$(CONTAINER_ENGINE) build . -t $(IMAGE_NAME)
+
 clean:
 	rm -f $(BINARY)
+	$(CONTAINER_ENGINE) rmi -i $(IMAGE_NAME)
 
 lint:
 	$(CONTAINER_ENGINE) run --rm -v "$(PWD):/app:Z" -w /app \

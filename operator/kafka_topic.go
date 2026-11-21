@@ -42,6 +42,12 @@ func (in *KafkaTopic) DeepCopyObject() runtime.Object {
 func (in *KafkaTopicList) DeepCopyInto(out *KafkaTopicList) {
 	*out = *in
 	in.ListMeta.DeepCopyInto(&out.ListMeta)
+	if in.Items != nil {
+		out.Items = make([]KafkaTopic, len(in.Items))
+		for i := range in.Items {
+			in.Items[i].DeepCopyInto(&out.Items[i])
+		}
+	}
 }
 
 func (in *KafkaTopicList) DeepCopy() *KafkaTopicList {

@@ -1,42 +1,53 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"log/slog"
-	"os"
 
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/controller-runtime/pkg/builder"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
+	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-func setupLogging() {
-	var level slog.Level
-	switch os.Getenv(envarLogLevel) {
-	case "DEBUG":
-		level = slog.LevelDebug
-	case "ERROR":
-		level = slog.LevelError
-	case "INFO":
-		level = slog.LevelInfo
-	case "WARN":
-		level = slog.LevelWarn
-	default:
-		level = defaultLogLevel
-	}
-	opts := &slog.HandlerOptions{Level: level}
-	handler := slog.NewJSONHandler(os.Stderr, opts)
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
-	slog.Debug(fmt.Sprintf("Log level %s", level))
+type Reconciler struct {
+	client.Client
+}
+
+func (reconciler *Reconciler) Reconcile(
+	ctx context.Context,
+	req reconcile.Request,
+) (reconcile.Result, error) {
+	slog.Debug("starting reconciler")
+	return reconcile.Result{}, nil
 }
 
 func main() {
 	setupLogging()
 	cfg := config.GetConfigOrDie()
 	mgrOptions := manager.Options{}
+	slog.Debug("initializing manager")
 	mgr, err := manager.New(cfg, mgrOptions)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("Manager: %s\n", mgr)
+	client := mgr.GetClient()
+	reconciler := &Reconciler{Client: client}
+	slog.Debug("initializing builder")
+	err = builder.ControllerManagedBy(mgr).
+		For(&appsv1.ReplicaSet{}).
+		Owns(&corev1.Pod{}).
+		Complete(reconciler)
+	if err != nil {
+		panic(err)
+	}
+	slog.Debug("starting manager")
+	err = mgr.Start(signals.SetupSignalHandler())
+	if err != nil {
+		panic(err)
+	}
 }

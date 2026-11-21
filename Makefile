@@ -21,9 +21,8 @@ cluster:
 
 .PHONY: deployment
 deployment: operator cluster
-	@if ! minikube image ls | grep -q localhost; then \
-		$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -; \
-	fi
+	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -;
+	# TODO: Add ServiceAccount, ClusterRole
 	kubectl create deployment $(DEPLOYMENT_NAME) --image $(IMAGE_NAME)
 
 .PHONY: clean
@@ -45,3 +44,6 @@ clean-cluster:
 .PHONY: clean-deployment
 clean-deployment:
 	kubectl delete deployment $(DEPLOYMENT_NAME) --ignore-not-found
+	@if minikube image ls | grep -q localhost; then \
+		minikube image rm $(IMAGE_NAME); \
+	fi

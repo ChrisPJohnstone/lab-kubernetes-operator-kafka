@@ -19,8 +19,11 @@ operator-image:
 cluster:
 	@minikube status || minikube start
 
+crd: cluster
+	kubectl apply -f manifests/crd.yaml
+
 .PHONY: operator
-operator: operator-image cluster
+operator: operator-image crd
 	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -
 	kubectl apply -f manifests/controller.yaml
 

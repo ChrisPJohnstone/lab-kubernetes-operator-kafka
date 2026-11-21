@@ -25,4 +25,5 @@ func (reconciler *Reconciler) Reconcile(
 	}
 	slog.Debug(fmt.Sprintf("Got topic '%s'", topic.Spec.Name))
 	return reconcile.Result{}, nil
+	// TODO: Build kafka topic using franz-go
 }

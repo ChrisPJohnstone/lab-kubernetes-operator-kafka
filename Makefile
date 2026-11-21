@@ -21,9 +21,8 @@ cluster:
 
 .PHONY: deployment
 deployment: operator cluster
-	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -;
-	# TODO: Add ServiceAccount, ClusterRole
-	kubectl create deployment $(DEPLOYMENT_NAME) --image $(IMAGE_NAME)
+	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -
+	kubectl apply -f manifests/controller.py
 
 .PHONY: clean
 clean: clean-kafka clean-cluster clean-operator

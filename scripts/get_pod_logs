@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+while read -r pod; do
+	kubectl logs "${pod#pod/}"
+done < <( kubectl get pods -o name )

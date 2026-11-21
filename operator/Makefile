@@ -10,8 +10,8 @@ all: $(BINARY) image
 $(BINARY): $(shell find . -type f -name '*.go')
 	go build -o $(BINARY) .
 
-image: $(shell find . -type f -name '*.go') Containerfile
-	$(CONTAINER_ENGINE) build . -t $(IMAGE_NAME)
+image: $(BINARY) Containerfile
+	$(CONTAINER_ENGINE) build . -t $(IMAGE_NAME);
 
 clean:
 	rm -f $(BINARY)

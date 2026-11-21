@@ -2,25 +2,46 @@ CONTAINER_ENGINE ?= podman
 IMAGE_NAME       ?= localhost/kafka-operator:dev
 DEPLOYMENT_NAME  ?= kafka-operator
 
-.PHONY: kafka operator cluster deployment clean
-
+.PHONY: all
 all: kafka deployment
 
+.PHONY: kafka
 kafka:
-	$(CONTAINER_ENGINE) compose up -d
+	@if ! $(CONTAINER_ENGINE) container exists kafka; then \
+		$(CONTAINER_ENGINE) compose up -d; \
+	fi
 
+.PHONY: operator
 operator:
 	make -C operator image IMAGE_NAME=$(IMAGE_NAME)
 
+.PHONY: cluster
 cluster:
-	minikube start
+	@minikube status || minikube start
 
+.PHONY: deployment
 deployment: operator cluster
-	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -
+	@if ! minikube image ls | grep -q localhost; then \
+		$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -; \
+	fi
 	kubectl create deployment $(DEPLOYMENT_NAME) --image $(IMAGE_NAME)
 
-clean:
-	minikube delete
-	make -C operator clean IMAGE_NAME=$(IMAGE_NAME)
+.PHONY: clean
+clean: clean-kafka clean-cluster clean-operator
+
+.PHONY: clean-kafka
+clean-kafka:
 	$(CONTAINER_ENGINE) compose down -v --rmi
 	$(CONTAINER_ENGINE) unshare rm -rf output
+
+.PHONY: clean-operator
+clean-operator:
+	make -C operator clean IMAGE_NAME=$(IMAGE_NAME)
+
+.PHONY: clean-cluster
+clean-cluster:
+	minikube delete
+
+.PHONY: clean-deployment
+clean-deployment:
+	kubectl delete deployment $(DEPLOYMENT_NAME) --ignore-not-found

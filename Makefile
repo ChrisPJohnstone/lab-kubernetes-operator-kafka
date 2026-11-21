@@ -28,12 +28,14 @@ operator: operator-image cluster
 	kubectl apply -f manifests/controller.yaml
 
 .PHONY: clean
-clean: clean-kafka clean-operator clean-cluster
+clean: clean-kafka clean-operator-image clean-cluster
 
 .PHONY: clean-kafka
 clean-kafka:
-	$(CONTAINER_ENGINE) compose down -v --rmi
-	$(CONTAINER_ENGINE) unshare rm -rf output
+	@if $(CONTAINER_ENGINE) container exists kafka; then \
+        $(CONTAINER_ENGINE) compose down -v --rmi; \
+        $(CONTAINER_ENGINE) unshare rm -rf output; \
+    fi
 
 .PHONY: clean-operator-image
 clean-operator-image:
@@ -45,7 +47,7 @@ clean-cluster:
 
 .PHONY: clean-operator
 clean-operator:
-	kubectl delete operator $(DEPLOYMENT_NAME) --ignore-not-found
+	kubectl delete deployment $(DEPLOYMENT_NAME) --ignore-not-found
 	@if minikube image ls | grep -q localhost; then \
 		minikube image rm $(IMAGE_NAME); \
 	fi

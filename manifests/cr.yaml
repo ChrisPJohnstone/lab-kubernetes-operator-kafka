@@ -1,0 +1,6 @@
+apiVersion: lab.com/v1
+kind: KafkaTopic
+metadata:
+  name: test
+spec:
+  name: test

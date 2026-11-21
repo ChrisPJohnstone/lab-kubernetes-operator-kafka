@@ -27,6 +27,10 @@ operator: operator-image crd
 	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -
 	kubectl apply -f manifests/controller.yaml
 
+.PHONY: topic
+topic: operator
+	kubectl apply -f manifests/cr.yaml
+
 .PHONY: clean
 clean: clean-kafka clean-operator-image clean-cluster
 
@@ -49,5 +53,5 @@ clean-cluster:
 clean-operator:
 	kubectl delete deployment $(DEPLOYMENT_NAME) --ignore-not-found
 	@if minikube image ls | grep -q localhost; then \
-		minikube image rm $(IMAGE_NAME); \
+		minikube image rm -f $(IMAGE_NAME); \
 	fi

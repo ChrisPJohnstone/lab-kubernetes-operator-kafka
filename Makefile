@@ -21,9 +21,6 @@ cluster:
 
 .PHONY: operator
 operator: operator-image cluster
-	@if minikube image ls | grep -q localhost; then \
-		minikube image rm $(IMAGE_NAME); \
-    fi
 	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -
 	kubectl apply -f manifests/controller.yaml
 

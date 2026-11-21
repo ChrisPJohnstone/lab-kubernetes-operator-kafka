@@ -1,47 +1,47 @@
 package main
 
 import (
-	"context"
 	"log/slog"
 
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
+	clientscheme "k8s.io/client-go/kubernetes/scheme"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/manager/signals"
-	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-type Reconciler struct {
-	client.Client
-}
-
-func (reconciler *Reconciler) Reconcile(
-	ctx context.Context,
-	req reconcile.Request,
-) (reconcile.Result, error) {
-	slog.Debug("starting reconciler")
-	return reconcile.Result{}, nil
+func initScheme() *runtime.Scheme {
+	slog.Debug("initializing scheme")
+	scheme := runtime.NewScheme()
+	utilruntime.Must(clientscheme.AddToScheme(scheme))
+	groupVersion := schema.GroupVersion{
+		Group:   crdGroup,
+		Version: kafkaTopicVersion,
+	}
+	scheme.AddKnownTypes(groupVersion, &KafkaTopic{}, &KafkaTopicList{})
+	metav1.AddToGroupVersion(scheme, groupVersion)
+	return scheme
 }
 
 func main() {
 	setupLogging()
+	scheme := initScheme()
 	cfg := config.GetConfigOrDie()
-	mgrOptions := manager.Options{}
+	mgrOptions := manager.Options{Scheme: scheme}
 	slog.Debug("initializing manager")
 	mgr, err := manager.New(cfg, mgrOptions)
 	if err != nil {
 		panic(err)
 	}
+	slog.Debug("initializing builder")
 	client := mgr.GetClient()
 	reconciler := &Reconciler{Client: client}
-	slog.Debug("initializing builder")
-	err = builder.ControllerManagedBy(mgr).
-		For(&appsv1.ReplicaSet{}).
-		Owns(&corev1.Pod{}).
-		Complete(reconciler)
+	bldr := builder.ControllerManagedBy(mgr)
+	err = bldr.For(&KafkaTopic{}).Complete(reconciler)
 	if err != nil {
 		panic(err)
 	}

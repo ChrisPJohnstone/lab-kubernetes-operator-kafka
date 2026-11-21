@@ -1,6 +1,5 @@
 CONTAINER_ENGINE ?= podman
 IMAGE_NAME       ?= localhost/kafka-operator:dev
-DEPLOYMENT_NAME  ?= kafka-operator
 
 .PHONY: all
 all: kafka operator
@@ -51,7 +50,7 @@ clean-cluster:
 
 .PHONY: clean-operator
 clean-operator:
-	kubectl delete deployment $(DEPLOYMENT_NAME) --ignore-not-found
+	kubectl delete deployment controller --ignore-not-found
 	@if minikube image ls | grep -q localhost; then \
-		minikube image rm -f $(IMAGE_NAME); \
+		minikube image rm $(IMAGE_NAME); \
 	fi

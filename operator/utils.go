@@ -28,5 +28,5 @@ func setupLogging() {
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
 	controllerruntime.SetLogger(logr.FromSlogHandler(handler))
-	slog.Debug(fmt.Sprintf("Log level %s", level))
+	slog.Debug(fmt.Sprintf("log level %s", level))
 }

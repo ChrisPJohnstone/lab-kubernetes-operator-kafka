@@ -4,3 +4,5 @@ metadata:
   name: test
 spec:
   name: test
+  partitions: 1
+  replicationFactor: 1

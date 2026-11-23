@@ -21,6 +21,12 @@ spec:
               type: object
               required:
                 - name
+                - partitions
+                - replicationFactor
               properties:
                 name:
                   type: string
+                partitions:
+                  type: integer
+                replicationFactor:
+                  type: integer

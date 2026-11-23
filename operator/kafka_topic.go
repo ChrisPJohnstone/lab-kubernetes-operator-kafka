@@ -6,7 +6,9 @@ import (
 )
 
 type KafkaTopicSpec struct {
-	Name string `json:"name"`
+	Name              string `json:"name"`
+	Partitions        int32  `json:"partitions"`
+	ReplicationFactor int16  `json:"replicationFactor"`
 }
 
 type KafkaTopic struct {

@@ -39,7 +39,13 @@ func (reconciler *Reconciler) Reconcile(
 	defer kgoClient.Close()
 	kadmClient := kadm.NewClient(kgoClient)
 	slog.Debug(fmt.Sprintf("Creating topic %s", topicName))
-	resp, err := kadmClient.CreateTopic(ctx, -1, -1, nil, topicName)
+	resp, err := kadmClient.CreateTopic(
+		ctx,
+		topic.Spec.Partitions,
+		topic.Spec.ReplicationFactor,
+		nil,
+		topicName,
+	)
 	if err != nil && err != kerr.TopicAlreadyExists {
 		slog.Error(err.Error())
 		return reconcile.Result{}, err

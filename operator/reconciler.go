@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/twmb/franz-go/pkg/kadm"
 	"github.com/twmb/franz-go/pkg/kerr"
-	"github.com/twmb/franz-go/pkg/kgo"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -24,32 +22,31 @@ func (reconciler *Reconciler) Reconcile(
 	var topic KafkaTopic
 	err := reconciler.Get(ctx, req.NamespacedName, &topic)
 	if err != nil {
-		slog.Error(err.Error())
 		return reconcile.Result{}, err
 	}
 	topicName := topic.Spec.Name
 	slog.Debug(fmt.Sprintf("Reconciling topic '%s'", topicName))
 
-	seedBrokers := kgo.SeedBrokers(kafkaAddress)
-	kgoClient, err := kgo.NewClient(seedBrokers)
+	kgoClient, err := initKgoClient()
 	if err != nil {
-		slog.Error(err.Error())
 		return reconcile.Result{}, err
 	}
-	defer kgoClient.Close()
-	kadmClient := kadm.NewClient(kgoClient)
-	slog.Debug(fmt.Sprintf("Creating topic %s", topicName))
-	resp, err := kadmClient.CreateTopic(
+	kadmClient := initKadmClient(kgoClient)
+
+	err = createKafkaTopic(
+		kadmClient,
 		ctx,
+		topicName,
 		topic.Spec.Partitions,
 		topic.Spec.ReplicationFactor,
-		nil,
-		topicName,
 	)
-	if err != nil && err != kerr.TopicAlreadyExists {
-		slog.Error(err.Error())
+	if err == kerr.TopicAlreadyExists {
+		slog.Debug(fmt.Sprintf("Topic '%s' already exists", topicName))
+		return reconcile.Result{}, nil
+	}
+	if err != nil {
 		return reconcile.Result{}, err
 	}
-	slog.Debug(fmt.Sprintf("Created topic succesfully, response: %v", resp))
+	slog.Debug("Created topic succesfully")
 	return reconcile.Result{}, nil
 }

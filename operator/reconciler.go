@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/twmb/franz-go/pkg/kgo"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
@@ -24,6 +25,11 @@ func (reconciler *Reconciler) Reconcile(
 		return reconcile.Result{}, err
 	}
 	slog.Debug(fmt.Sprintf("Got topic '%s'", topic.Spec.Name))
+	seedBrokers := kgo.SeedBrokers(kafkaAddress)
+	client, err := kgo.NewClient(seedBrokers)
+	if err != nil {
+		return reconcile.Result{}, err
+	}
+	slog.Debug(fmt.Sprintf("Client %v", client))
 	return reconcile.Result{}, nil
-	// TODO: Build kafka topic using franz-go
 }

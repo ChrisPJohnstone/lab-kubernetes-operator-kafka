@@ -7,4 +7,5 @@ const (
 	defaultLogLevel   = slog.LevelInfo
 	crdGroup          = "lab.com"
 	kafkaTopicVersion = "v1"
+	kafkaAddress      = "localhost:9092"
 )

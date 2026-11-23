@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/twmb/franz-go/pkg/kadm"
 	"github.com/twmb/franz-go/pkg/kerr"
+	"github.com/twmb/franz-go/pkg/kgo"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
@@ -28,11 +30,16 @@ func (reconciler *Reconciler) Reconcile(
 	topicName := topic.Spec.Name
 	slog.Debug(fmt.Sprintf("Reconciling topic '%s'", topicName))
 
-	kgoClient, err := initKgoClient()
+	slog.Debug("initializing kgo client")
+	seedBrokers := kgo.SeedBrokers(kafkaAddress)
+	kgoClient, err := kgo.NewClient(seedBrokers)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
-	kadmClient := initKadmClient(kgoClient)
+	defer kgoClient.Close()
+	slog.Debug("initializing kadm client")
+	kadmClient := kadm.NewClient(kgoClient)
+	defer kadmClient.Close()
 
 	if !topic.DeletionTimestamp.IsZero() {
 		if !controllerutil.ContainsFinalizer(&topic, kafkaTopicFinalizer) {

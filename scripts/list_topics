@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+function kafka-topics() {
+	local engine="${CONTAINER_ENGINE:-podman}"
+	local host="${KAFKA_HOST:-localhost:9091}"
+	"${engine}" exec kafka "/opt/kafka/bin/kafka-topics.sh" \
+		--bootstrap-server "${host}" "$@"
+}
+
+kafka-topics --list "$@"

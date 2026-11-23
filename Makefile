@@ -22,7 +22,7 @@ crd: cluster
 	kubectl apply -f manifests/crd.yaml
 
 .PHONY: operator
-operator: operator-image crd
+operator: operator-image crd kafka
 	$(CONTAINER_ENGINE) save $(IMAGE_NAME) | minikube image load -
 	kubectl apply -f manifests/controller.yaml
 
@@ -51,6 +51,8 @@ clean-cluster:
 .PHONY: clean-operator
 clean-operator:
 	kubectl delete deployment controller --ignore-not-found
+    # TODO: Come up with something better than sleep
 	@if minikube image ls | grep -q localhost; then \
+        sleep 3; \
 		minikube image rm $(IMAGE_NAME); \
 	fi

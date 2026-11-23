@@ -23,11 +23,11 @@ func (reconciler *Reconciler) Reconcile(
 	slog.Debug("starting reconciler")
 	var topic KafkaTopic
 	err := reconciler.Get(ctx, req.NamespacedName, &topic)
-	topicName := topic.Spec.Name
 	if err != nil {
 		slog.Error(err.Error())
 		return reconcile.Result{}, err
 	}
+	topicName := topic.Spec.Name
 	slog.Debug(fmt.Sprintf("Reconciling topic '%s'", topicName))
 
 	seedBrokers := kgo.SeedBrokers(kafkaAddress)

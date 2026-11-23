@@ -48,3 +48,17 @@ func createKafkaTopic(
 	}
 	return nil
 }
+
+func deleteKafkaTopic(
+	kadmClient *kadm.Client,
+	ctx context.Context,
+	name string,
+) error {
+	slog.Debug(fmt.Sprintf("Deleting topic %s", name))
+	resp, err := kadmClient.DeleteTopic(ctx, name)
+	slog.Debug(fmt.Sprintf("Delete topic response: %v", resp))
+	if err != nil {
+		return err
+	}
+	return nil
+}

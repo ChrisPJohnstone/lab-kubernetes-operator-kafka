@@ -7,6 +7,7 @@ import (
 
 	"github.com/twmb/franz-go/pkg/kerr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -33,6 +34,20 @@ func (reconciler *Reconciler) Reconcile(
 	}
 	kadmClient := initKadmClient(kgoClient)
 
+	if !topic.DeletionTimestamp.IsZero() {
+		if !controllerutil.ContainsFinalizer(&topic, kafkaTopicFinalizer) {
+			return reconcile.Result{}, nil
+		}
+		err := deleteKafkaTopic(kadmClient, ctx, topicName)
+		if err != nil {
+			return reconcile.Result{}, reconciler.Update(ctx, &topic)
+		}
+		return reconcile.Result{}, nil
+	}
+
+	if controllerutil.AddFinalizer(&topic, kafkaTopicFinalizer) {
+		return reconcile.Result{}, reconciler.Update(ctx, &topic)
+	}
 	err = createKafkaTopic(
 		kadmClient,
 		ctx,

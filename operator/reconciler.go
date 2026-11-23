@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -46,10 +47,11 @@ func (reconciler *Reconciler) Reconcile(
 			return reconcile.Result{}, nil
 		}
 		err := deleteKafkaTopic(kadmClient, ctx, topicName)
-		if err != nil {
-			return reconcile.Result{}, reconciler.Update(ctx, &topic)
+		if err != nil && !errors.Is(err, kerr.UnknownTopicOrPartition) {
+			return reconcile.Result{}, err
 		}
-		return reconcile.Result{}, nil
+		controllerutil.RemoveFinalizer(&topic, kafkaTopicFinalizer)
+		return reconcile.Result{}, reconciler.Update(ctx, &topic)
 	}
 
 	if controllerutil.AddFinalizer(&topic, kafkaTopicFinalizer) {
@@ -62,7 +64,7 @@ func (reconciler *Reconciler) Reconcile(
 		topic.Spec.Partitions,
 		topic.Spec.ReplicationFactor,
 	)
-	if err == kerr.TopicAlreadyExists {
+	if errors.Is(err, kerr.TopicAlreadyExists) {
 		slog.Debug(fmt.Sprintf("Topic '%s' already exists", topicName))
 		return reconcile.Result{}, nil
 	}
